@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance Predictor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    h1 {
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    label {
+      font-size: 14px;
+      font-weight: bold;
+      display: block;
+      margin-top: 15px;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      margin-top: 5px;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px;
+      width: 100%;
+      border: none;
+      border-radius: 8px;
+      background: #2563eb;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 8px;
+      background: #f1f5f9;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    .error { color: #dc2626; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Attendance Predictor</h1>
+    <label for="attended">Attended Classes</label>
+    <input type="number" id="attended" placeholder="e.g., 42" min="0">
+
+    <label for="total">Total Classes</label>
+    <input type="number" id="total" placeholder="e.g., 56" min="0">
+
+    <button onclick="calculateAttendance()">Calculate</button>
+
+    <div id="output" class="result"></div>
+  </div>
+
+  <script>
+    // Load saved values on page load
+    window.onload = function() {
+      const savedAttended = localStorage.getItem("attended");
+      const savedTotal = localStorage.getItem("total");
+
+      if (savedAttended) document.getElementById("attended").value = savedAttended;
+      if (savedTotal) document.getElementById("total").value = savedTotal;
+
+      if (savedAttended && savedTotal) {
+        calculateAttendance(); // auto-calc on reload
+      }
+    };
+
+    function calculateAttendance() {
+      const attended = parseInt(document.getElementById("attended").value) || 0;
+      const total = parseInt(document.getElementById("total").value) || 0;
+      const output = document.getElementById("output");
+      
+      // Save values to localStorage
+      localStorage.setItem("attended", attended);
+      localStorage.setItem("total", total);
+
+      if (total <= 0) {
+        output.innerHTML = '<p class="error">Enter total classes greater than 0.</p>';
+        return;
+      }
+      if (attended > total) {
+        output.innerHTML = '<p class="error">Attended classes cannot exceed total classes.</p>';
+        return;
+      }
+
+      const pct = ((attended / total) * 100).toFixed(2);
+      let msg = `<p><strong>Attendance:</strong> ${pct}%</p>`;
+
+      if (pct < 75) {
+        const needMore = Math.max(0, 3 * total - 4 * attended);
+        msg += `<p>You need to attend <strong>${needMore}</strong> more class${needMore === 1 ? '' : 'es'} consecutively to reach 75%.</p>`;
+      } else {
+        const canMiss = Math.max(0, Math.floor(attended / 0.75 - total));
+        const surplus = (pct - 75).toFixed(2);
+        msg += `<p>You can miss up to <strong>${canMiss}</strong> future class${canMiss === 1 ? '' : 'es'} and still stay ≥ 75%.</p>`;
+        msg += `<p>You are <strong>${surplus}%</strong> above the 75% threshold.</p>`;
+      }
+
+      output.innerHTML = msg;
+    }
+  </script>
+</body>
+</html>
